@@ -215,8 +215,9 @@ public:
     Unit_Table(int width,int height,int card_count,const vector<vector<vector<int>>>& jb_value_list) {
 
         this->width = width;
-        this->height = height;
+        this->height = height/4;
         this->jb_value_list = jb_value_list;
+        this->card_count = card_count;
 
         for (int card_id = 0; card_id < card_count; card_id++) {
             table.push_back(vector<vector<Act_Unit>>());

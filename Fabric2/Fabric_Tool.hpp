@@ -276,7 +276,7 @@ public:
         FZ_Data fz_data = read_fz(fz_path);
 
         int fz_width = fz_data.Z;
-        int fz_height = fz_data.S / 2;
+        int fz_height = fz_data.S ;
         int fz_card_count = fz_data.card_count;
         vector<vector<vector<int>>> jb_value_format =  fz_data.Get_jb_value_List();
 
@@ -308,7 +308,28 @@ public:
             curve_list.insert(curve_list.end(), curve_list_tmp.begin(), curve_list_tmp.end());
         }
 
-        
+        ofstream fout("t.obj",ios::out|ios::binary);
+        string txt;
+
+        for (vector<v3_f>& curve: curve_list) {
+            for (v3_f& p: curve) {
+                txt += su::fmt("v {} {} {}\n", {p.x,p.y,p.z});
+            }
+        }
+        int index = 1;
+        for (vector<v3_f>& curve : curve_list) {
+            txt += su::fmt("l ", { });
+            for (v3_f& p : curve) {
+                txt += su::fmt("{} ", { index });
+
+                index++;
+            }
+
+            txt += "\n";
+        }
+        fout.write(txt.c_str(),txt.size());
+
+        return;
 
 
         // vector<vector<v3_f>> vertices_result_list;
