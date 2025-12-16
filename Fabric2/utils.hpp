@@ -104,27 +104,41 @@ public:
     int version;
     int Z;
     int S;
-    vector<vector<int>> jb_value;
-    vector<vector<int>> actions;
-    int bytes_per_step;
+    int card_count;
+    vector<vector<int>> jb_value_list;
+    vector<vector<vector<int>>> actions;
+
 
     FZ_Data(int version,
             int Z,
             int S,
-            vector<vector<int>> jb_value,
-            vector<vector<int>> actions,
-            int bytes_per_step) {
+            int card_count,
+            vector<vector<int>> jb_value_list,
+            vector<vector<vector<int>>> actions 
+            ) {
 
         this->version = version;
         this->Z = Z;
         this->S = S;
-        this->jb_value = jb_value;
+        this->jb_value_list = jb_value_list;
         this->actions = actions;
-        this->bytes_per_step = bytes_per_step;
-
+        this->card_count = card_count;
 
     }
     FZ_Data(){}
+
+    vector<vector<vector<int>>> Get_jb_value_List() {
+
+        vector<vector<vector<int>>> jb_value_format;
+
+        for (int c = 0; c < card_count;c++) {
+            vector<int>& tmp = jb_value_list[c];
+            jb_value_format.push_back({ {tmp[0],tmp[1]},{tmp[2],tmp[3]},{tmp[4],tmp[5]},{tmp[6],tmp[7]}});
+
+        }
+
+        return jb_value_format;
+    }
 
 
 };
@@ -141,7 +155,7 @@ vector<int> bytes_unpack(const char* buf, int start, int end) {
         char b = buf[pos];
 
         for (int i = 0; i < 8;i++) {
-            if (b & (0b00000001 << i)) {
+            if (b & (0b10000000 >> i)) {
                 res.push_back(1);
             }
             else {
@@ -163,15 +177,25 @@ struct Act_Unit {
 public:
     int x;
     int y;
-    int front;
-    int back;
+
+    int bed_0_front;
+    int bed_0_back;
+
+    int bed_1_front;
+    int bed_1_back;
+
+
 public:
-    Act_Unit(int x,int y,int front, int back):x(x),y(y),front(front),back(back) {
+    Act_Unit(int x,int y,int bed_0_front, int bed_0_back,int bed_1_front,int bed_1_back)
+        :x(x),y(y), 
+        bed_0_front(bed_0_front), bed_0_back(bed_0_back), 
+        bed_1_front(bed_0_front), bed_1_back(bed_0_back)
+    {
 
 
     }
     v3<float> Get_Center() const{
-        return { (float)(x - (front + back) / 2), (float)(y / 1.5), 0.0};
+        return { (float)(x - (bed_0_front + bed_0_back) / 2), (float)(y / 1.5), 0.0};
 
     }
 
@@ -183,68 +207,64 @@ class Unit_Table {
 public:
     int width;
     int height;
-    vector<vector<int>> jb_value;
-    vector<vector<Act_Unit>> table;
+    int card_count;
+    vector<vector<vector<int>>> jb_value_list;
+    vector<vector<vector<Act_Unit>>> table;
 
 public:
-    Unit_Table(int width,int height,const vector<vector<int>>& jb_value) {
+    Unit_Table(int width,int height,int card_count,const vector<vector<vector<int>>>& jb_value_list) {
 
         this->width = width;
         this->height = height;
-        this->jb_value = jb_value;
+        this->jb_value_list = jb_value_list;
 
-        table.reserve(width);
+        for (int card_id = 0; card_id < card_count; card_id++) {
+            table.push_back(vector<vector<Act_Unit>>());
+        }
 
-        for (int x = 0; x < width; x++) {
+        for (int card_id = 0; card_id < card_count; card_id++) {
 
-            vector<Act_Unit> tmp_list;
-            tmp_list.reserve(height);
-            int jb_id = 0;
+            const vector<vector<int>>& card_jb_value  = jb_value_list[card_id];
 
-            for (int y = 0; y < height;y++) {
+            for (int x = 0; x < width; x++) {
+                vector<Act_Unit> tmp_list;
 
-                Act_Unit unit = { x,y,jb_value[jb_id][0],jb_value[jb_id][1] };
-                tmp_list.push_back(unit);
-                jb_id++;
-                if (jb_id>=4) {
-                    jb_id = 0;
+                for (int y = 0; y < height;y++) {
+
+                    tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[1][0], card_jb_value[1][1]));
+                    tmp_list.push_back(Act_Unit(x, y, card_jb_value[2][0], card_jb_value[2][1], card_jb_value[3][0], card_jb_value[3][1]));
                 }
-            }
-            table.push_back(tmp_list);
 
+                table[card_id].push_back(tmp_list);
+            }
         }
+
+        
 
 
 
 
     }
 
-    void Apply_Actions(const vector<vector<int>>& actions) {
+    void Apply_Actions(const vector<vector<vector<int>>>& actions) {
 
-        for (int x = 0; x < width;x++) {
-            for (int y = 0; y < height;y++) {
+        for (int card_id = 0; card_id < card_count; card_id++) {
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
 
-                table[x][y].front += actions[y * 2][x];
-                table[x][y].back += actions[y * 2 + 1][x];
+
+                    table[card_id][x][y].bed_0_front += actions[card_id][y * 4 + 0][x];
+                    table[card_id][x][y].bed_0_back  += actions[card_id][y * 4 + 1][x];
+
+                    table[card_id][x][y].bed_1_front += actions[card_id][y * 4 + 2][x];
+                    table[card_id][x][y].bed_1_back += actions[card_id][y * 4 + 3][x];
+                }
+
             }
-
         }
+        
     }
-    void y_half_split() {
-        for (int x = 0; x < width; x++) {
-            const vector<Act_Unit>& tmp = table[x];
 
-            vector<Act_Unit> new_list;
-            new_list.reserve(height/2);
-
-            for (int y = 0; y < height / 2;y++) {
-                new_list.push_back(tmp[y*2]);
-            }
-            table[x] = new_list;
-        }
-
-        height = height / 2;
-    }
 
 
 

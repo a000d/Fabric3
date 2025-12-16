@@ -27,32 +27,55 @@ FZ_Data read_fz(string fz_path) {
     int Z = _u16(buffer,2);
     int S = _u16(buffer,4);
 
-    vector<vector<int>> jb_value =	{ {_u8(buffer,6 + 0) ,_u8(buffer,6 + 1)} ,{_u8(buffer,6 + 2) ,_u8(buffer,6 + 3)},
-                                    {_u8(buffer,6 + 4) ,_u8(buffer,6 + 5)} ,{_u8(buffer,6 + 6) ,_u8(buffer,6 + 7)} };
+    vector<vector<int>> jb_value_list;
 
-    int bytes_per_step = (Z + 7) / 8;
+    for (int i = 0; i < card_count;i++) {
+        vector<int> list;
+        for (int t = 0; t < 8;t++) {
+            list.push_back(buffer[6+i*8+t]);
 
-    vector<vector<int>> actions;
-    int base = 14;
-
-    for (int i = 0; i < S;i++) {
-        int start = base + i * bytes_per_step;
-        int end = start + bytes_per_step;
-
-        vector<int> unpacked = bytes_unpack(buffer,start,end);
-
-        ASSERT(unpacked.size() == Z);
-
-
-        actions.push_back(unpacked);
+        }
+        jb_value_list.push_back(list);
 
     }
+
+    vector<vector<vector<int>>> actions;
+    int base = 6+8* card_count;
+
+    vector<int> card_data_unpack = bytes_unpack(buffer,base, base + Z*S*card_count/8);
+
+    int stride_S = card_count * Z;
+    int stride_cd = Z;
+
+
+    for (int y = 0; y < card_count; y++) {
+        actions.push_back(vector<vector<int>>());
+    }
+
+    for (int y = 0; y < S;y++) {
+
+        for (int c = 0; c < card_count;c++) {
+
+            vector<int> line;
+            for (int i = 0; i < Z;i++) {
+                line.push_back(card_data_unpack[y* stride_S + c* stride_cd + i]);
+            }
+            actions[c].push_back(line);
+        }
+
+
+    }
+
+
+
+
+
     delete[](buffer);
 
-    return FZ_Data(version, Z, S, jb_value, actions, bytes_per_step);
+    return FZ_Data(version, Z, S,card_count, jb_value_list, actions);
 }
 
-void Draw_Line(const Unit_Table& unit_table,const float stretch,vector<vector<v3_f>>& curve_list) {
+void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,float bed_distance,vector<vector<v3_f>>& curve_list) {
 
     int width = unit_table.width;
     int height = unit_table.height;
@@ -68,7 +91,7 @@ void Draw_Line(const Unit_Table& unit_table,const float stretch,vector<vector<v3
     }
 
 
-    auto draw_line_item = [&curve_list,&unit_table,&height,&width,stretch](int x)->void {
+    auto draw_line_item = [&curve_list,&unit_table,&height,&width,stretch, card_id, bed_distance](int x)->void {
 
         //std::cout << su::fmt("\r绘制线圈 {}/{}       ", { x ,width });
 
@@ -77,78 +100,37 @@ void Draw_Line(const Unit_Table& unit_table,const float stretch,vector<vector<v3
 
         for (int y = 0; y < height; y++) {
 
-            const Act_Unit& unit = unit_table.table[x][y];
-            const int front = unit.front;
-            const int back = unit.back;
+            const Act_Unit& unit = unit_table.table[card_id][x][y];
 
-            if (front == back) {
-                //std::cout << "direction err:"<< x<<" "<<y<<" " << front <<" " << back << endl;
-                continue;
-            }
+            int bed_0_front = unit.bed_0_front  ;
+            int bed_0_back = unit.bed_0_back    ;
+            int bed_1_front = unit.bed_1_front  ;
+            int bed_1_back = unit.bed_1_back    ;
 
-            v3_f center = { x - f(front + back) / 2, f(y) / f(1.5), 0.0 };
-
-            DIRECTION in_dir;
-            DIRECTION out_dir;
-
-            if (y == 0) {
-                in_dir = mid_v;
-            }
-            else if (unit_table.table[x][y - 1].Get_Center().x < center.x) {
-                in_dir = min_v;
-            }
-            else if (unit_table.table[x][y - 1].Get_Center().x > center.x) {
-                in_dir = add_v;
-            }
-            else {
-                in_dir = mid_v;
-            }
-
-            if (y == height - 1) {
-                out_dir = mid_v;
-            }
-            else if (unit_table.table[x][y + 1].Get_Center().x < center.x) {
-                out_dir = min_v;
-            }
-            else if (unit_table.table[x][y + 1].Get_Center().x > center.x) {
-                out_dir = add_v;
-            }
-            else {
-                out_dir = mid_v;
-            }
+            v3_f center = { x - f(bed_0_front + bed_0_back) / 2, f(y) / f(1.5), 0.0 };
+            v3_f center_1 = { center.x,center.y,center.z+ bed_distance };
 
             vector<v3_f> unit_points;
-            if (front > back) {
-                unit_points = Get_Curve(center, n_in, in_dir, out_dir, stretch);
+            if (bed_0_front > bed_0_back) {
+                unit_points = Get_Curve(center, n_in, mid_v, mid_v, stretch);
             }
-            else if (back > front) {
-                unit_points = Get_Curve(center, p_in, in_dir, out_dir, stretch);
+            else if (bed_0_back > bed_0_front) {
+                unit_points = Get_Curve(center, p_in, mid_v, mid_v, stretch);
             }
             else {
-                std::cout << "direction err" << endl;
-                continue;
+                unit_points = {};
             }
+            curve_point_list.insert(curve_point_list.end(), unit_points.begin(), unit_points.end());
 
-            //for (int i = 0; i < unit_points.size(); i++) {
-            //	v3_f p = unit_points[i];
-
-            //	while (true) {
-            //		string k = p.Get_Hash_str();
-            //		if (point_location_map.count(k) == 0) {
-            //			point_location_map[k] = 1;
-            //			break;
-            //		}
-            //		else {
-            //			p = { p.x + f(0.03),p.y,p.z + f(0.02) };
-
-            //			unit_points[i] = p;
-
-            //		}
-            //	}
-
-
-            //}
-
+            if (bed_1_front > bed_1_back) {
+                unit_points = Get_Curve(center_1, n_in, mid_v, mid_v, stretch);
+            }
+            else if (bed_1_back > bed_1_front) {
+                unit_points = Get_Curve(center_1, p_in, mid_v, mid_v, stretch);
+            }
+            else {
+                unit_points = {};
+            }
 
             curve_point_list.insert(curve_point_list.end(), unit_points.begin(), unit_points.end());
 
@@ -295,18 +277,11 @@ public:
 
         int fz_width = fz_data.Z;
         int fz_height = fz_data.S / 2;
-        vector<vector<int>> fz_jb_value = fz_data.jb_value;
+        int fz_card_count = fz_data.card_count;
+        vector<vector<vector<int>>> jb_value_format =  fz_data.Get_jb_value_List();
 
         if (jb_value_override!="-1") {
             try {
-                fz_jb_value[0][0] = atoi(jb_value_override.substr(0,1).c_str());
-                fz_jb_value[0][1] = atoi(jb_value_override.substr(1,1).c_str());
-                fz_jb_value[1][0] = atoi(jb_value_override.substr(2,1).c_str());
-                fz_jb_value[1][1] = atoi(jb_value_override.substr(3,1).c_str());
-                fz_jb_value[2][0] = atoi(jb_value_override.substr(4,1).c_str());
-                fz_jb_value[2][1] = atoi(jb_value_override.substr(5,1).c_str());
-                fz_jb_value[3][0] = atoi(jb_value_override.substr(6,1).c_str());
-                fz_jb_value[3][1] = atoi(jb_value_override.substr(7,1).c_str());
 
 
             }
@@ -316,23 +291,24 @@ public:
             }
 
         }
-        std::cout << fz_jb_value[0][0] << " ";
-        std::cout << fz_jb_value[0][1] << " ";
-        std::cout << fz_jb_value[1][0] << " ";
-        std::cout << fz_jb_value[1][1] << " ";
-        std::cout << fz_jb_value[2][0] << " ";
-        std::cout << fz_jb_value[2][1] << " ";
-        std::cout << fz_jb_value[3][0] << " ";
-        std::cout << fz_jb_value[3][1] << " ";
         std::cout << endl;
 
-        Unit_Table unit_table = { fz_width, fz_height, fz_jb_value };
+        Unit_Table unit_table = { fz_width, fz_height,fz_card_count, jb_value_format };
 
         unit_table.Apply_Actions(fz_data.actions);
-        unit_table.y_half_split();
+
 
         vector<vector<v3_f>> curve_list;
-        Draw_Line(unit_table, stretch,curve_list);
+
+        for (int c = 0; c < fz_card_count;c++) {
+            vector<vector<v3_f>> curve_list_tmp;
+
+            Draw_Line(unit_table, c, stretch, 10, curve_list_tmp);
+
+            curve_list.insert(curve_list.end(), curve_list_tmp.begin(), curve_list_tmp.end());
+        }
+
+        
 
 
         // vector<vector<v3_f>> vertices_result_list;
