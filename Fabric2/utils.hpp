@@ -189,7 +189,7 @@ public:
     Act_Unit(int x,int y,int bed_0_front, int bed_0_back,int bed_1_front,int bed_1_back)
         :x(x),y(y), 
         bed_0_front(bed_0_front), bed_0_back(bed_0_back), 
-        bed_1_front(bed_0_front), bed_1_back(bed_0_back)
+        bed_1_front(bed_1_front), bed_1_back(bed_1_back)
     {
 
 
@@ -238,11 +238,6 @@ public:
                 table[card_id].push_back(tmp_list);
             }
         }
-
-        
-
-
-
 
     }
 
@@ -435,3 +430,7 @@ void Faces_to_Obj(vector<v3_f> vertices, vector<v3<unsigned int>> faces,string n
 
 
 }
+
+
+
+

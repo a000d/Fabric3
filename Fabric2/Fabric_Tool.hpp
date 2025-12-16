@@ -141,18 +141,18 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
 
     };
 
-    // for (int x = 0; x < width;x++) {
-    //     // std::thread(draw_line_item,x));
-    //     draw_line_item(x);
-    // }
+     for (int x = 0; x < width;x++) {
+         // std::thread(draw_line_item,x));
+         draw_line_item(x);
+     }
 
-    vector<std::thread> thread_list;
-    for (int x = 0; x < width;x++) {
-        thread_list.push_back(std::thread(draw_line_item,x));
-    }
-    for (int x = 0; x < width; x++) {
-        thread_list[x].join();
-    }
+    //vector<std::thread> thread_list;
+    //for (int x = 0; x < width;x++) {
+    //    thread_list.push_back(std::thread(draw_line_item,x));
+    //}
+    //for (int x = 0; x < width; x++) {
+    //    thread_list[x].join();
+    //}
 
     // 处理重叠点
 
@@ -319,26 +319,22 @@ public:
         faces_result_list.clear();
         normal_result_list.clear();
 
-        try{
-            for (int i = 0; i < curve_list.size(); i++)
-            {
+        
+        for (int i = 0; i < curve_list.size(); i++)
+        {
+            cout << su::fmt("\r{}/{}       ", {i,curve_list.size() });
 
+            vector<v3_f> vertices_result;
+            vector<v3<uint>> faces_result;
+            vector<v3_f> normal_result;
 
-                vector<v3_f> vertices_result;
-                vector<v3<uint>> faces_result;
-                vector<v3_f> normal_result;
+            Sweep(i,sweep_width, segments, curve_list[i], vertices_result, normal_result, faces_result);
+            vertices_result_list.push_back(vertices_result);
+            faces_result_list.push_back(faces_result);
+            normal_result_list.push_back(normal_result);
 
-                Sweep(i,sweep_width, segments, curve_list[i], vertices_result, normal_result, faces_result);
-                vertices_result_list.push_back(vertices_result);
-                faces_result_list.push_back(faces_result);
-                normal_result_list.push_back(normal_result);
-
-            }
         }
-        catch (...) {
-            cout << "err" << endl;
-            return;
-        }
+      
 
         cout<<"DONE"<<endl;
     }
