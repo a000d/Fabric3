@@ -107,14 +107,16 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
             int bed_1_front = unit.bed_1_front  ;
             int bed_1_back = unit.bed_1_back    ;
 
-            v3_f center = { x - f(bed_0_front + bed_0_back) / 2, f(y) / f(1.5), 0.0 };
+            v3_f center = { x + f(bed_0_front + bed_0_back) / 2, f(y) / f(1.5), 0.0 };
+
+
             v3_f center_1 = { center.x,center.y,center.z+ bed_distance };
 
             vector<v3_f> unit_points;
-            if (bed_0_front > bed_0_back) {
+            if (bed_0_front < bed_0_back) {
                 unit_points = Get_Curve(center, n_in, mid_v, mid_v, stretch);
             }
-            else if (bed_0_back > bed_0_front) {
+            else if (bed_0_back < bed_0_front) {
                 unit_points = Get_Curve(center, p_in, mid_v, mid_v, stretch);
             }
             else {
@@ -122,10 +124,10 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
             }
             curve_point_list.insert(curve_point_list.end(), unit_points.begin(), unit_points.end());
 
-            if (bed_1_front > bed_1_back) {
+            if (bed_1_front < bed_1_back) {
                 unit_points = Get_Curve(center_1, n_in, mid_v, mid_v, stretch);
             }
-            else if (bed_1_back > bed_1_front) {
+            else if (bed_1_back < bed_1_front) {
                 unit_points = Get_Curve(center_1, p_in, mid_v, mid_v, stretch);
             }
             else {
@@ -292,6 +294,8 @@ public:
 
         }
         std::cout << endl;
+        
+        //jb_value_format = { { {1,2},{1,1},{1,0} , {1,1} } };
 
         Unit_Table unit_table = { fz_width, fz_height,fz_card_count, jb_value_format };
 
@@ -308,28 +312,28 @@ public:
             curve_list.insert(curve_list.end(), curve_list_tmp.begin(), curve_list_tmp.end());
         }
 
-        ofstream fout("t.obj",ios::out|ios::binary);
-        string txt;
+        //ofstream fout("t.obj",ios::out|ios::binary);
+        //string txt;
 
-        for (vector<v3_f>& curve: curve_list) {
-            for (v3_f& p: curve) {
-                txt += su::fmt("v {} {} {}\n", {p.x,p.y,p.z});
-            }
-        }
-        int index = 1;
-        for (vector<v3_f>& curve : curve_list) {
-            txt += su::fmt("l ", { });
-            for (v3_f& p : curve) {
-                txt += su::fmt("{} ", { index });
+        //for (vector<v3_f>& curve: curve_list) {
+        //    for (v3_f& p: curve) {
+        //        txt += su::fmt("v {} {} {}\n", {p.x,p.y,p.z});
+        //    }
+        //}
+        //int index = 1;
+        //for (vector<v3_f>& curve : curve_list) {
+        //    txt += su::fmt("l ", { });
+        //    for (v3_f& p : curve) {
+        //        txt += su::fmt("{} ", { index });
 
-                index++;
-            }
+        //        index++;
+        //    }
 
-            txt += "\n";
-        }
-        fout.write(txt.c_str(),txt.size());
+        //    txt += "\n";
+        //}
+        //fout.write(txt.c_str(),txt.size());
 
-        return;
+        //return;
 
 
         // vector<vector<v3_f>> vertices_result_list;

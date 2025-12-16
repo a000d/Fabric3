@@ -232,8 +232,19 @@ public:
 
                 for (int y = 0; y < height;y++) {
 
-                    tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[1][0], card_jb_value[1][1]));
-                    tmp_list.push_back(Act_Unit(x, y, card_jb_value[2][0], card_jb_value[2][1], card_jb_value[3][0], card_jb_value[3][1]));
+                    
+
+                    if (x%2==0) {
+                        
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[2][0], card_jb_value[2][1], card_jb_value[3][0], card_jb_value[3][1]));
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[1][0], card_jb_value[1][1]));
+                    }
+                    else {
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[1][0], card_jb_value[1][1]));
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[2][0], card_jb_value[2][1], card_jb_value[3][0], card_jb_value[3][1]));
+                    }
+
+
                 }
 
                 table[card_id].push_back(tmp_list);
