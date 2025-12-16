@@ -107,14 +107,16 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
             int bed_1_front = unit.bed_1_front  ;
             int bed_1_back = unit.bed_1_back    ;
 
-            v3_f center = { x - f(bed_0_front + bed_0_back) / 2, f(y) / f(1.5), 0.0 };
+            v3_f center = { x + f(bed_0_front + bed_0_back) / 2, f(y) / f(1.5), 0.0 };
+
+
             v3_f center_1 = { center.x,center.y,center.z+ bed_distance };
 
             vector<v3_f> unit_points;
-            if (bed_0_front > bed_0_back) {
+            if (bed_0_front < bed_0_back) {
                 unit_points = Get_Curve(center, n_in, mid_v, mid_v, stretch);
             }
-            else if (bed_0_back > bed_0_front) {
+            else if (bed_0_back < bed_0_front) {
                 unit_points = Get_Curve(center, p_in, mid_v, mid_v, stretch);
             }
             else {
@@ -122,10 +124,10 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
             }
             curve_point_list.insert(curve_point_list.end(), unit_points.begin(), unit_points.end());
 
-            if (bed_1_front > bed_1_back) {
+            if (bed_1_front < bed_1_back) {
                 unit_points = Get_Curve(center_1, n_in, mid_v, mid_v, stretch);
             }
-            else if (bed_1_back > bed_1_front) {
+            else if (bed_1_back < bed_1_front) {
                 unit_points = Get_Curve(center_1, p_in, mid_v, mid_v, stretch);
             }
             else {
@@ -292,6 +294,8 @@ public:
 
         }
         std::cout << endl;
+        
+        //jb_value_format = { { {1,2},{1,1},{1,0} , {1,1} } };
 
         Unit_Table unit_table = { fz_width, fz_height,fz_card_count, jb_value_format };
 
