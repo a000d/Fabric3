@@ -75,11 +75,15 @@ FZ_Data read_fz(string fz_path) {
     return FZ_Data(version, Z, S,card_count, jb_value_list, actions);
 }
 
-void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,float bed_distance,vector<vector<v3_f>>& curve_list) {
+void Draw_Line(const Unit_Table& unit_table,
+    int card_id,const float stretch,float bed_distance,
+    vector<vector<v3_f>>& curve_list,
+    const List3<bool>& bed_0_right_side_linked, 
+    const List3<bool>& bed_1_right_side_linked) {
+
 
     int width = unit_table.width;
     int height = unit_table.height;
-
 
     //
     curve_list.clear();
@@ -91,7 +95,10 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
     }
 
 
-    auto draw_line_item = [&curve_list,&unit_table,&height,&width,stretch, card_id, bed_distance](int x)->void {
+    auto draw_line_item = [&curve_list,&unit_table,
+        &height,&width,
+        stretch, card_id, bed_distance,
+        &bed_0_right_side_linked,&bed_1_right_side_linked](int x)->void {
 
         //std::cout << su::fmt("\r绘制线圈 {}/{}       ", { x ,width });
 
@@ -108,9 +115,28 @@ void Draw_Line(const Unit_Table& unit_table,int card_id,const float stretch,floa
             int bed_1_back = unit.bed_1_back    ;
 
             v3_f center = { x + f(bed_0_front + bed_0_back) / 2, f(y) / f(1.5), 0.0 };
-
-
             v3_f center_1 = { center.x,center.y,center.z+ bed_distance };
+
+            int b_0_curve_poc_x = x + min(bed_0_front, bed_0_back);
+            int b_0_curve_poc_y = y;
+
+            if (x!=0 && x!= width-1 && y<height-2) {
+
+                bool right_link = bed_0_right_side_linked.cGet(card_id, b_0_curve_poc_x, b_0_curve_poc_y+2);//网上偏移两个格
+                bool left_link = bed_0_right_side_linked.cGet(card_id, b_0_curve_poc_x-1, b_0_curve_poc_y+2);
+
+                if (left_link && !right_link) {
+                    center = center + v3_f{-0.2,0,0};
+                }
+                else if (!left_link && right_link) {
+                    center = center + v3_f{ 0.2,0,0 };
+                }
+
+
+            }
+
+
+
 
             vector<v3_f> unit_points;
             if (bed_0_front < bed_0_back) {
@@ -300,40 +326,41 @@ public:
         Unit_Table unit_table = { fz_width, fz_height,fz_card_count, jb_value_format };
 
         unit_table.Apply_Actions(fz_data.actions);
-
+        unit_table.Test_Linked();
 
         vector<vector<v3_f>> curve_list;
 
         for (int c = 0; c < fz_card_count;c++) {
             vector<vector<v3_f>> curve_list_tmp;
 
-            Draw_Line(unit_table, c, stretch, 10, curve_list_tmp);
+            Draw_Line(unit_table, c, stretch, 10, curve_list_tmp, 
+                unit_table.bed_0_right_side_linked, unit_table.bed_1_right_side_linked);
 
             curve_list.insert(curve_list.end(), curve_list_tmp.begin(), curve_list_tmp.end());
         }
 
-        //ofstream fout("t.obj",ios::out|ios::binary);
-        //string txt;
+        ofstream fout("t.obj",ios::out|ios::binary);
+        string txt;
 
-        //for (vector<v3_f>& curve: curve_list) {
-        //    for (v3_f& p: curve) {
-        //        txt += su::fmt("v {} {} {}\n", {p.x,p.y,p.z});
-        //    }
-        //}
-        //int index = 1;
-        //for (vector<v3_f>& curve : curve_list) {
-        //    txt += su::fmt("l ", { });
-        //    for (v3_f& p : curve) {
-        //        txt += su::fmt("{} ", { index });
+        for (vector<v3_f>& curve: curve_list) {
+            for (v3_f& p: curve) {
+                txt += su::fmt("v {} {} {}\n", {p.x,p.y,p.z});
+            }
+        }
+        int index = 1;
+        for (vector<v3_f>& curve : curve_list) {
+            txt += su::fmt("l ", { });
+            for (v3_f& p : curve) {
+                txt += su::fmt("{} ", { index });
 
-        //        index++;
-        //    }
+                index++;
+            }
 
-        //    txt += "\n";
-        //}
-        //fout.write(txt.c_str(),txt.size());
+            txt += "\n";
+        }
+        fout.write(txt.c_str(),txt.size());
 
-        //return;
+        return;
 
 
         // vector<vector<v3_f>> vertices_result_list;

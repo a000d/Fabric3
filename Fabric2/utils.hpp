@@ -143,6 +143,54 @@ public:
 
 };
 
+
+template<typename T>
+class List3 {
+
+    T* buffer = nullptr;
+    int s1;
+    int s2;
+
+    int d1;
+    int d2;
+    int d3;
+public:
+    
+    List3(){}
+
+    void Init(int d1, int d2, int d3) {
+        buffer = new T[d1 * d2 * d3];
+
+        s1 = d2 * d3;
+        s2 = d3;
+
+        this->d1 = d1;
+        this->d2 = d2;
+        this->d3 = d3;
+
+        memset(buffer, 0, d1 * d2 * d3);
+
+    }
+   
+    T& Get(int z, int y, int x) {
+
+        return *(buffer + z * s1 + y * s2 + x);
+
+    }
+    T cGet(int z, int y, int x) const{
+
+        return *(buffer + z * s1 + y * s2 + x);
+
+    }
+
+    ~List3() {
+        if (buffer != nullptr) {
+            delete[](buffer);
+        }
+
+    }
+};
+
 vector<int> bytes_unpack(const char* buf, int start, int end) {
 
     int len = end - start;
@@ -210,6 +258,8 @@ public:
     int card_count;
     vector<vector<vector<int>>> jb_value_list;
     vector<vector<vector<Act_Unit>>> table;
+    List3<bool> bed_0_right_side_linked;//单元右侧是否存在线牵拉
+    List3<bool> bed_1_right_side_linked;
 
 public:
     Unit_Table(int width,int height,int card_count,const vector<vector<vector<int>>>& jb_value_list) {
@@ -230,7 +280,7 @@ public:
             for (int x = 0; x < width; x++) {
                 vector<Act_Unit> tmp_list;
 
-                for (int y = 0; y < height;y++) {
+                for (int y = 0; y < height/2;y++) {
 
                     
 
@@ -273,6 +323,115 @@ public:
     }
 
 
+    void Test_Linked() {
+
+        bed_0_right_side_linked.Init(card_count, width + 8, height);
+        bed_1_right_side_linked.Init(card_count, width + 8, height);
+        
+
+        for (int card_id = 0; card_id < card_count; card_id++) {
+            for (int x = 0; x < width;x++) {
+                for (int y = 0; y < height-1;y++) {
+
+                    const Act_Unit& unit_current = table[card_id][x][y];
+                    const Act_Unit& unit_up = table[card_id][x][y+1];
+
+                    //bed_0
+                    {
+                        int bed_0_curr_front = unit_current.bed_0_front;
+                        int bed_0_curr_back = unit_current.bed_0_back;
+                        int min_curr = min(bed_0_curr_front, bed_0_curr_back);
+
+                        int bed_0_up_front = unit_up.bed_0_front;
+                        int bed_0_up_back = unit_up.bed_0_back;
+                        int min_up = min(bed_0_up_front, bed_0_up_back);
+
+                        if (min_up > min_curr) {
+                            for (int i = 0; i < min_up - min_curr; i++) {
+                                //bed_0_right_side_linked[card_id][x + min_curr + i][y] = true;
+                                //bed_0_right_side_linked[card_id][x + min_curr + i][y + 1] = true;
+                                bed_0_right_side_linked.Get(card_id, x + min_curr + i, y) = true;
+                                bed_0_right_side_linked.Get(card_id, x + min_curr + i, y + 1) = true;
+
+                            }
+
+
+                        }
+                        else if (min_up < min_curr) {
+                            for (int i = 0; i < abs(min_up - min_curr); i++) {
+                                //bed_0_right_side_linked[card_id][x + min_curr - 1-i][y] = true;
+                                //bed_0_right_side_linked[card_id][x + min_curr - 1-i][y + 1] = true;
+
+                                bed_0_right_side_linked.Get(card_id, x + min_curr - i - 1, y) = true;
+                                bed_0_right_side_linked.Get(card_id, x + min_curr - i - 1, y + 1) = true;
+                            }
+
+                        }
+                    }
+                    //bed_1
+                    {
+                        int bed_1_curr_front = unit_current.bed_1_front;
+                        int bed_1_curr_back = unit_current.bed_1_back;
+                        int min_curr = min(bed_1_curr_front, bed_1_curr_back);
+
+                        int bed_1_up_front = unit_up.bed_1_front;
+                        int bed_1_up_back = unit_up.bed_1_back;
+                        int min_up = min(bed_1_up_front, bed_1_up_back);
+
+                        if (min_up > min_curr) {
+                            for (int i = 0; i < min_up - min_curr; i++) {
+                                //bed_0_right_side_linked[card_id][x + min_curr + i][y] = true;
+                                //bed_0_right_side_linked[card_id][x + min_curr + i][y + 1] = true;
+                                bed_1_right_side_linked.Get(card_id, x + min_curr + i, y) = true;
+                                bed_1_right_side_linked.Get(card_id, x + min_curr + i, y + 1) = true;
+
+                            }
+
+
+                        }
+                        else if (min_up < min_curr) {
+                            for (int i = 0; i < abs(min_up - min_curr); i++) {
+                                //bed_0_right_side_linked[card_id][x + min_curr - 1-i][y] = true;
+                                //bed_0_right_side_linked[card_id][x + min_curr - 1-i][y + 1] = true;
+
+                                bed_1_right_side_linked.Get(card_id, x + min_curr - i - 1, y) = true;
+                                bed_1_right_side_linked.Get(card_id, x + min_curr - i - 1, y + 1) = true;
+                            }
+
+                        }
+                    }
+
+
+                }
+            }
+        }
+
+        ofstream fout("occupy.txt",ios::binary|ios::out );
+        string txt;
+        for (int x = 0; x < width+2; x++) {
+            for (int y = 0; y < height - 1; y++) {
+
+                if (bed_0_right_side_linked.Get(0,x,y)) {
+                    txt += "1";
+                }
+                else {
+                    txt += " ";
+                }
+
+
+            }
+            txt += "\n";
+        }
+        fout.write(txt.c_str(),txt.size());
+
+
+
+
+
+
+
+
+    }
 
 
 
@@ -442,7 +601,6 @@ void Faces_to_Obj(vector<v3_f> vertices, vector<v3<unsigned int>> faces,string n
 
 
 }
-
 
 
 
