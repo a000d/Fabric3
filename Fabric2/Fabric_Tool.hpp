@@ -330,7 +330,7 @@ public:
             }
             cout << "\n";
         }
-        
+        jb_value_list_res = jb_value_format;
 
 
         Unit_Table unit_table = { fz_width, fz_height,fz_card_count, jb_value_format };
