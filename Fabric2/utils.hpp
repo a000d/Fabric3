@@ -129,12 +129,18 @@ public:
 
     vector<vector<vector<int>>> Get_jb_value_List() {
 
-        vector<vector<vector<int>>> jb_value_format;
+        vector<vector<vector<int>>> jb_value_format;// 贾卡号-奇偶列-数码序列
 
         for (int c = 0; c < card_count;c++) {
-            vector<int>& tmp = jb_value_list[c];
-            jb_value_format.push_back({ {tmp[0],tmp[1]},{tmp[2],tmp[3]},{tmp[4],tmp[5]},{tmp[6],tmp[7]}});
+            const vector<int>& t = jb_value_list[c];
+            
+            jb_value_format.push_back({ {t[0],t[1],t[2],t[3],t[4],t[5],t[6],t[7]},{t[4],t[5],t[6],t[7],t[0],t[1],t[2],t[3]}});
 
+        }
+        //返回解析结果，并补全到三个贾卡
+
+        for (int i = card_count; i < 3; i++) {
+            jb_value_format.push_back({ {-1,-1,-1,-1,-1,-1,-1,-1},{-1,-1,-1,-1,-1,-1,-1,-1} });
         }
 
         return jb_value_format;
@@ -256,7 +262,7 @@ public:
     int width;
     int height;
     int card_count;
-    vector<vector<vector<int>>> jb_value_list;
+    vector<vector<vector<int>>> jb_value_list;// 贾卡号-奇偶列-数码序列
     vector<vector<vector<Act_Unit>>> table;
     List3<bool> bed_0_right_side_linked;//单元右侧是否存在线牵拉
     List3<bool> bed_1_right_side_linked;
@@ -286,12 +292,12 @@ public:
 
                     if (x%2==0) {
                         
-                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[2][0], card_jb_value[2][1], card_jb_value[3][0], card_jb_value[3][1]));
-                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[1][0], card_jb_value[1][1]));
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[0][2], card_jb_value[0][3]));
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][4], card_jb_value[0][5], card_jb_value[0][6], card_jb_value[0][7]));
                     }
                     else {
-                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[1][0], card_jb_value[1][1]));
-                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[2][0], card_jb_value[2][1], card_jb_value[3][0], card_jb_value[3][1]));
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[1][0], card_jb_value[1][1], card_jb_value[1][2], card_jb_value[1][3]));
+                        tmp_list.push_back(Act_Unit(x, y, card_jb_value[1][4], card_jb_value[1][5], card_jb_value[1][6], card_jb_value[1][7]));
                     }
 
 

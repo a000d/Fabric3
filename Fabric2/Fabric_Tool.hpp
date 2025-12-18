@@ -278,7 +278,8 @@ public:
 
     }
 
-    void Generate_Curve(string fz_path,float sweep_width,int segments,string jb_value_override,float stretch,
+    void Generate_Curve(string fz_path,float sweep_width,int segments,float stretch,const vector<vector<vector<int>>> jb_value_list_input, 
+                        vector<vector<vector<int>>>& jb_value_list_res,
                         vector<vector<v3_f>>& vertices_result_list,
                         vector<vector<v3<uint>>>& faces_result_list,
                         vector<vector<v3_f>>& normal_result_list){
@@ -293,7 +294,6 @@ public:
             std::cout << "fz_path\t\t: "			<< fz_path << endl;
             std::cout << "sweep_width\t\t: "		<< sweep_width << endl;
             std::cout << "segments	\t\t: "			<< segments << endl;
-            std::cout << "jb_value_override	\t\t: " << jb_value_override << endl;
             std::cout << "stretch	\t\t: "			<< stretch << endl;
         }
         catch (...) {
@@ -306,22 +306,32 @@ public:
         int fz_width = fz_data.Z;
         int fz_height = fz_data.S ;
         int fz_card_count = fz_data.card_count;
-        vector<vector<vector<int>>> jb_value_format =  fz_data.Get_jb_value_List();
-
-        if (jb_value_override!="-1") {
-            try {
+        vector<vector<vector<int>>> jb_value_format =  fz_data.Get_jb_value_List();// 贾卡号-奇偶列-数码序列
 
 
-            }
-            catch (...) {
-                std::cout << "input wrong!" << endl;
-                return;
-            }
-
-        }
-        std::cout << endl;
+        std::cout <<" odd and even column code" << endl;
         
-        //jb_value_format = { { {1,2},{1,1},{1,0} , {1,1} } };
+        for (int c = 0; c < 3;c++) {
+            for (int o = 0; o < 2;o++) {
+                if (jb_value_list_input[c][o][0]==-1) {
+
+                }
+                else {
+                    jb_value_format[c][o] = jb_value_list_input[c][o];
+                }
+            }
+        }
+        for (int c = 0; c < 3; c++) {
+            for (int o = 0; o < 2; o++) {
+                for (int i = 0; i < 8;i++) {
+                    cout << jb_value_format[c][o][i]<<" ";
+                }
+                cout << "\n";
+            }
+            cout << "\n";
+        }
+        
+
 
         Unit_Table unit_table = { fz_width, fz_height,fz_card_count, jb_value_format };
 
