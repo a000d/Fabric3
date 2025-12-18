@@ -290,7 +290,7 @@ public:
 
                     
 
-                    if (x%2==0) {
+                    if (x%2==1) {
                         
                         tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][0], card_jb_value[0][1], card_jb_value[0][2], card_jb_value[0][3]));
                         tmp_list.push_back(Act_Unit(x, y, card_jb_value[0][4], card_jb_value[0][5], card_jb_value[0][6], card_jb_value[0][7]));

@@ -349,7 +349,7 @@ public:
             curve_list.insert(curve_list.end(), curve_list_tmp.begin(), curve_list_tmp.end());
         }
 
-   /*     ofstream fout("t.obj",ios::out|ios::binary);
+        ofstream fout("t.obj",ios::out|ios::binary);
         string txt;
 
         for (vector<v3_f>& curve: curve_list) {
@@ -370,7 +370,7 @@ public:
         }
         fout.write(txt.c_str(),txt.size());
 
-        return;*/
+        return;
 
 
         // vector<vector<v3_f>> vertices_result_list;

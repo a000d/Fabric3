@@ -23,9 +23,6 @@
     <ClInclude Include="Fabric_Tool.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Fast_Load_Mesh.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Polyline_Sweep_Cylinder.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
