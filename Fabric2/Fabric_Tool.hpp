@@ -359,7 +359,7 @@ public:
             curve_smoothed_list.push_back(smoothed);
 
         }
-
+        /*
 
         ofstream fout("t.obj",ios::out|ios::binary);
         string txt;
@@ -381,34 +381,29 @@ public:
             txt += "\n";
         }
         fout.write(txt.c_str(),txt.size());
-
+        
         return;
-
-
-        // vector<vector<v3_f>> vertices_result_list;
-        // vector<vector<v3<uint>>> faces_result_list;
-        // vector<vector<v3_f>> normal_result_list;
-
+        /**/
         vertices_result_list.clear();
         faces_result_list.clear();
         normal_result_list.clear();
 
         
-        for (int i = 0; i < curve_list.size(); i++)
+        for (int i = 0; i < curve_smoothed_list.size(); i++)
         {
-            cout << su::fmt("\r{}/{}       ", {i,curve_list.size() });
+            cout << su::fmt("\r{}/{}       ", {i,curve_smoothed_list.size() });
 
             vector<v3_f> vertices_result;
             vector<v3<uint>> faces_result;
             vector<v3_f> normal_result;
 
-            Sweep(i,sweep_width, segments, curve_list[i], vertices_result, normal_result, faces_result);
+            Sweep(i,sweep_width, segments, curve_smoothed_list[i], vertices_result, normal_result, faces_result);
             vertices_result_list.push_back(vertices_result);
             faces_result_list.push_back(faces_result);
             normal_result_list.push_back(normal_result);
 
         }
-      
+        
 
         cout<<"DONE"<<endl;
     }
