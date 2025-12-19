@@ -38,7 +38,10 @@ struct v3 {
 
         return { x * v,y * v,z * v };
     }
+    v3 operator*(const v3& v) const {
 
+        return { x * v.x,y * v.y,z * v.z };
+    }
 
     float length() const {
         return sqrt(x * x + y * y + z * z);
@@ -393,4 +396,120 @@ void Faces_to_Obj(vector<v3_f> vertices, vector<v3<unsigned int>> faces,string n
 }
 
 
+float Get_Angle_AB_AC(const v3_f& A, const v3_f& B, const v3_f& C) {
 
+    v3_f AB = B - A;
+    v3_f AC = C - A;
+
+    float ABxAC = AB.x * AC.x + AB.y * AC.y + AB.z * AC.z;
+
+    float m_AB = AB.length();
+    float m_AC = AC.length();
+
+    float cos_angle = ABxAC / (m_AB* m_AC);
+    float angle = acos(cos_angle);
+
+
+    return angle / (PI) * 180;
+}
+
+vector<v3_f> Curve_Smooth(const vector<v3_f>& curve, float angle_threshold = 170) {
+
+    vector<v3_f> smooth_curve;
+    smooth_curve.reserve(curve.size()*2);
+    smooth_curve.push_back(curve[0]);
+
+    for (int i = 1; i < curve.size() - 1;i++) {
+        
+        float angle = Get_Angle_AB_AC(curve[i], curve[i - 1], curve[i + 1]);
+
+        if (angle<angle_threshold) {
+            v3_f pos_1 = (curve[i - 1] - curve[i]) * 0.25 + curve[i];
+            v3_f pos_2 = (curve[i + 1] - curve[i]) * 0.25 + curve[i];
+
+            smooth_curve.push_back(pos_1);
+            smooth_curve.push_back(pos_2);
+        }
+        else {
+            smooth_curve.push_back(curve[i]);
+        }
+    }
+
+    smooth_curve.push_back(curve[curve.size()-1]);
+
+    return smooth_curve;
+
+}
+
+void Find_Next_Sample(int curr_seg_id,float curr_local_distance,const vector<v3_f>& curve_point_list,float next_distance,
+    int& next_seg_id, v3_f& norm, v3_f& pos,float& last_seg_occupy,bool& valid) {
+
+    float distance_remain = (curve_point_list[curr_seg_id + 1] - curve_point_list[curr_seg_id]).length() - curr_local_distance;
+
+    int seg_id_add = 0;
+
+    float distance_occupy = distance_remain;
+
+    while (true) {
+        if (distance_occupy<distance_remain) {
+            seg_id_add ++;
+
+            if (seg_id_add+1+ seg_id_add>= curve_point_list.size()) {
+
+                valid = false;
+                return;
+            }
+
+            distance_occupy += (curve_point_list[curr_seg_id + 1 + seg_id_add] - curve_point_list[curr_seg_id + seg_id_add]).length();
+        }
+        else {
+            break;
+        }
+    }
+
+    next_seg_id = curr_seg_id + seg_id_add;
+
+    last_seg_occupy = (curve_point_list[next_seg_id + 1] - curve_point_list[next_seg_id]).length() - (distance_occupy - next_distance);
+
+    norm = (curve_point_list[next_seg_id + 1] - curve_point_list[next_seg_id]).Get_Norm();
+    pos = curve_point_list[next_seg_id] + (norm * last_seg_occupy);
+    valid = true;
+
+
+}
+
+void Curve_Resample(const vector<v3_f>& point_list,float seg_distance, vector<v3_f>& sample_points, vector<v3_f>& sample_directions) {
+
+    sample_points.clear();
+    sample_directions.clear();
+
+    sample_points.reserve(8192 * 8);
+    sample_directions.reserve(8192 * 8);
+
+    int curr_seg_id = 0;
+    float curr_local_distance = 0;
+
+    while (true) {
+
+        int next_seg_id;
+        v3_f norm;
+        v3_f pos;
+        float last_seg_occupy;
+        bool valid=false;
+
+        Find_Next_Sample(curr_seg_id, curr_local_distance, point_list, seg_distance,
+            next_seg_id,norm,pos,last_seg_occupy,valid);
+
+        if (valid == false) { break;}
+
+        sample_points.push_back(pos);
+        sample_directions.push_back(norm);
+
+        curr_seg_id = next_seg_id;
+        curr_local_distance = last_seg_occupy;
+
+
+
+    }
+
+}

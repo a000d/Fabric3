@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
+#include "Unit_Table.hpp"
+
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -348,17 +350,27 @@ public:
 
             curve_list.insert(curve_list.end(), curve_list_tmp.begin(), curve_list_tmp.end());
         }
+        vector<vector<v3_f>> curve_smoothed_list;
+
+        for (const vector<v3_f>& curve: curve_list) {
+
+            vector<v3_f> smoothed = Curve_Smooth(curve);
+
+            curve_smoothed_list.push_back(smoothed);
+
+        }
+
 
         ofstream fout("t.obj",ios::out|ios::binary);
         string txt;
 
-        for (vector<v3_f>& curve: curve_list) {
+        for (vector<v3_f>& curve: curve_smoothed_list) {
             for (v3_f& p: curve) {
                 txt += su::fmt("v {} {} {}\n", {p.x,p.y,p.z});
             }
         }
         int index = 1;
-        for (vector<v3_f>& curve : curve_list) {
+        for (vector<v3_f>& curve : curve_smoothed_list) {
             txt += su::fmt("l ", { });
             for (v3_f& p : curve) {
                 txt += su::fmt("{} ", { index });
