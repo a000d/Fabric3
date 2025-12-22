@@ -50,12 +50,12 @@ struct v3 {
     v3 Get_Norm() {
 
         float l = length();
-        return {x/l,y/l,z/l};
+        return { x / l,y / l,z / l };
     }
 
-    double Get_Hash_str() const{
+    double Get_Hash_str() const {
 
-        return (double)(x)*100000.0*100000.0 + (double)(y)*100000.0 + (double)(z);
+        return (double)(x) * 100000.0 * 100000.0 + (double)(y) * 100000.0 + (double)(z);
     }
 
 };
@@ -68,8 +68,8 @@ struct v3 {
 typedef unsigned int uint;
 
 enum DIRECTION {
-    None=-1,
-    p_in=0,
+    None = -1,
+    p_in = 0,
     n_in,
     add_v,
     mid_v,
@@ -86,14 +86,14 @@ v3_f cross(const v3_f& a, const v3_f& b) {
     };
 }
 
-int  _u8(char* data,int offset) {
+int  _u8(char* data, int offset) {
     return data[offset];
 }
 int  _u16(char* data, int offset) {
 
     char buf[2];
     buf[1] = data[offset];
-    buf[0] = data[offset+1];
+    buf[0] = data[offset + 1];
 
     short* t = (short*)buf;
 
@@ -113,12 +113,12 @@ public:
 
 
     FZ_Data(int version,
-            int Z,
-            int S,
-            int card_count,
-            vector<vector<int>> jb_value_list,
-            vector<vector<vector<int>>> actions 
-            ) {
+        int Z,
+        int S,
+        int card_count,
+        vector<vector<int>> jb_value_list,
+        vector<vector<vector<int>>> actions
+    ) {
 
         this->version = version;
         this->Z = Z;
@@ -128,16 +128,16 @@ public:
         this->card_count = card_count;
 
     }
-    FZ_Data(){}
+    FZ_Data() {}
 
     vector<vector<vector<int>>> Get_jb_value_List() {
 
         vector<vector<vector<int>>> jb_value_format;// 贾卡号-奇偶列-数码序列
 
-        for (int c = 0; c < card_count;c++) {
+        for (int c = 0; c < card_count; c++) {
             const vector<int>& t = jb_value_list[c];
-            
-            jb_value_format.push_back({ {t[0],t[1],t[2],t[3],t[4],t[5],t[6],t[7]},{t[4],t[5],t[6],t[7],t[0],t[1],t[2],t[3]}});
+
+            jb_value_format.push_back({ {t[0],t[1],t[2],t[3],t[4],t[5],t[6],t[7]},{t[4],t[5],t[6],t[7],t[0],t[1],t[2],t[3]} });
 
         }
         //返回解析结果，并补全到三个贾卡
@@ -164,8 +164,8 @@ class List3 {
     int d2;
     int d3;
 public:
-    
-    List3(){}
+
+    List3() {}
 
     void Init(int d1, int d2, int d3) {
         buffer = new T[d1 * d2 * d3];
@@ -180,13 +180,13 @@ public:
         memset(buffer, 0, d1 * d2 * d3);
 
     }
-   
+
     T& Get(int z, int y, int x) {
 
         return *(buffer + z * s1 + y * s2 + x);
 
     }
-    T cGet(int z, int y, int x) const{
+    T cGet(int z, int y, int x) const {
 
         return *(buffer + z * s1 + y * s2 + x);
 
@@ -207,11 +207,11 @@ vector<int> bytes_unpack(const char* buf, int start, int end) {
     vector<int> res;
     res.reserve(len * 8);
 
-    for (int pos = start; pos < end;pos++) {
+    for (int pos = start; pos < end; pos++) {
 
         char b = buf[pos];
 
-        for (int i = 0; i < 8;i++) {
+        for (int i = 0; i < 8; i++) {
             if (b & (0b10000000 >> i)) {
                 res.push_back(1);
             }
@@ -230,12 +230,12 @@ vector<int> bytes_unpack(const char* buf, int start, int end) {
 }
 
 
-void c4d_MS(v3_f& new_point_0A, v3_f& new_point_0B,const v3_f& p0, const v3_f& pa,const v3_f& pb, float len=0.04) {
+void c4d_MS(v3_f& new_point_0A, v3_f& new_point_0B, const v3_f& p0, const v3_f& pa, const v3_f& pb, float len = 0.04) {
 
-    if ((pa - p0).length()<len or (pb-p0).length()<len) {
+    if ((pa - p0).length() < len or (pb - p0).length() < len) {
 
-        new_point_0A = {-999,-999,-999};
-        new_point_0B = {-999,-999,-999};
+        new_point_0A = { -999,-999,-999 };
+        new_point_0B = { -999,-999,-999 };
         return;
     }
 
@@ -251,26 +251,26 @@ void c4d_MS(v3_f& new_point_0A, v3_f& new_point_0B,const v3_f& p0, const v3_f& p
 vector<v3_f> Get_Curve(const v3_f center, DIRECTION direction, DIRECTION in_dir, DIRECTION out_dir, float stretch) {
 
     vector<v3_f> curve_unit_template = {
-                                        {f(99999 ) ,   f(99999)   ,   f(99999	)},
-                                        {f(-0.2  ) ,   f(-0.58 )   ,   f(0		)},         // 两点重合，用于倒角
-                                        {f(-0.2  ) ,   f(-0.58 )   ,   f(0		)},         // 两点重合，用于倒角
-                                        {f(-0.4  ) ,   f(0.5  )   ,   f(-0.0333	)},
-                                        {f(-0.376) ,   f(0.671)   ,   f(-0.0376	)},
-                                        {f(-0.306) ,   f(0.821)   ,   f(-0.0528	)},
-                                        {f(-0.2  ) ,   f(0.933)   ,   f(-0.064	)},
-                                        {f(-0.069) ,   f(0.992)   ,   f(-0.0684	)},
+                                        {f(99999) ,   f(99999)   ,   f(99999)},
+                                        {f(-0.2) ,   f(-0.58)   ,   f(0)},         // 两点重合，用于倒角
+                                        {f(-0.2) ,   f(-0.58)   ,   f(0)},         // 两点重合，用于倒角
+                                        {f(-0.4) ,   f(0.5)   ,   f(-0.0333)},
+                                         {f(-0.376) ,   f(0.671)   ,   f(-0.0376)},
+                                        {f(-0.306) ,   f(0.821)   ,   f(-0.0528)},
+                                        {f(-0.2) ,   f(0.933)   ,   f(-0.064)},
+                                         {f(-0.069) ,   f(0.992)   ,   f(-0.0684)},
 
-                                        //{f(0) ,   f(0.992)   ,   f(-0.0684)},
+                                         // {f(0) ,   f(0.992)   ,   f(-0.0684)},
 
-                                        {f(0.069 ) ,   f(0.992)   ,   f(-0.0684	)},
-                                        {f(0.2   ) ,   f(0.933)   ,   f(-0.064	)},
-                                        {f(0.306 ) ,   f(0.821)   ,   f(-0.0528	)},
-                                        {f(0.376 ) ,   f(0.671)   ,   f(-0.0376	)},
-                                        {f(0.4   ) ,   f(0.5  )   ,   f(-0.0333	)},
-                                        {f(0.2   ) ,   f(-0.58 )   ,   f(0		)},         // 两点重合，用于倒角
-                                        {f(0.2   ) ,   f(-0.58 )   ,   f(0		)},         // 两点重合，用于倒角
-                                        {f(99999 ) ,   f(99999)   ,   f(99999	)},
-                                        };
+                                          {f(0.069) ,   f(0.992)   ,   f(-0.0684)},
+                                         {f(0.2) ,   f(0.933)   ,   f(-0.064)},
+                                         {f(0.306) ,   f(0.821)   ,   f(-0.0528)},
+                                          {f(0.376) ,   f(0.671)   ,   f(-0.0376)},
+                                         {f(0.4) ,   f(0.5)   ,   f(-0.0333)},
+                                         {f(0.2) ,   f(-0.58)   ,   f(0)},         // 两点重合，用于倒角
+                                         {f(0.2) ,   f(-0.58)   ,   f(0)},         // 两点重合，用于倒角
+                                         {f(99999) ,   f(99999)   ,   f(99999)},
+    };
 
     if (direction == p_in) {
         std::reverse(curve_unit_template.begin(), curve_unit_template.end());
@@ -301,9 +301,9 @@ vector<v3_f> Get_Curve(const v3_f center, DIRECTION direction, DIRECTION in_dir,
     v3_f a;
     v3_f b;
 
-    c4d_MS(a,b, curve_unit_template[1], curve_unit_template[0], curve_unit_template[3], 0.08);
-    if (a.x==-999) {
-        curve_unit_template.erase(curve_unit_template.begin()+1);
+    c4d_MS(a, b, curve_unit_template[1], curve_unit_template[0], curve_unit_template[3], 0.08);
+    if (a.x == -999) {
+        curve_unit_template.erase(curve_unit_template.begin() + 1);
     }
     else {
         curve_unit_template[1] = a;
@@ -311,13 +311,13 @@ vector<v3_f> Get_Curve(const v3_f center, DIRECTION direction, DIRECTION in_dir,
     }
 
 
-    c4d_MS(a, b, curve_unit_template[curve_unit_template.size()-2], curve_unit_template[curve_unit_template.size() - 4], curve_unit_template[curve_unit_template.size() - 1], f(0.08));
-    if (a.x==-999) {
-        curve_unit_template.erase(curve_unit_template.begin() + curve_unit_template.size() -2);
+    c4d_MS(a, b, curve_unit_template[curve_unit_template.size() - 2], curve_unit_template[curve_unit_template.size() - 4], curve_unit_template[curve_unit_template.size() - 1], f(0.08));
+    if (a.x == -999) {
+        curve_unit_template.erase(curve_unit_template.begin() + curve_unit_template.size() - 2);
     }
     else {
-        curve_unit_template[curve_unit_template.size() -3] = a;
-        curve_unit_template[curve_unit_template.size() -2] = b;
+        curve_unit_template[curve_unit_template.size() - 3] = a;
+        curve_unit_template[curve_unit_template.size() - 2] = b;
     }
 
 
@@ -337,7 +337,7 @@ vector<v3_f> Get_Curve(const v3_f center, DIRECTION direction, DIRECTION in_dir,
     float cy = center.y;
     float cz = center.z;
 
-    for (const v3_f& p: curve_unit_template) {
+    for (const v3_f& p : curve_unit_template) {
 
         result.push_back({ p.x + cx, p.y + cy, p.z + cz });
     }
@@ -347,22 +347,22 @@ vector<v3_f> Get_Curve(const v3_f center, DIRECTION direction, DIRECTION in_dir,
 
 void OBJ_Concat(
 
-    const vector<vector<v3_f>>&     vertices_list, const vector<vector<v3<unsigned int>>>&  faces_list,
+    const vector<vector<v3_f>>& vertices_list, const vector<vector<v3<unsigned int>>>& faces_list,
     vector<v3_f>& vertices, vector<v3<unsigned int>>& faces) {
 
     vertices.clear();
     faces.clear();
 
-    for (int i = 0; i < vertices_list.size();i++) {
+    for (int i = 0; i < vertices_list.size(); i++) {
         vertices.insert(vertices.end(), vertices_list[i].begin(), vertices_list[i].end());
     }
 
     int index_offset = 0;
     for (int i = 0; i < faces_list.size(); i++) {
 
-        for (const v3<unsigned int>& f: faces_list[i]) {
+        for (const v3<unsigned int>& f : faces_list[i]) {
 
-            faces.push_back({f.x+ index_offset,f.y+ index_offset,f.z+ index_offset });
+            faces.push_back({ f.x + index_offset,f.y + index_offset,f.z + index_offset });
 
         }
         index_offset += faces_list[i].size();
@@ -373,7 +373,7 @@ void OBJ_Concat(
 
 
 
-void Faces_to_Obj(vector<v3_f> vertices, vector<v3<unsigned int>> faces,string name) {
+void Faces_to_Obj(vector<v3_f> vertices, vector<v3<unsigned int>> faces, string name) {
 
     string obj_content;
 
@@ -406,7 +406,7 @@ float Get_Angle_AB_AC(const v3_f& A, const v3_f& B, const v3_f& C) {
     float m_AB = AB.length();
     float m_AC = AC.length();
 
-    float cos_angle = ABxAC / (m_AB* m_AC);
+    float cos_angle = ABxAC / (m_AB * m_AC);
     float angle = acos(cos_angle);
 
 
@@ -416,14 +416,14 @@ float Get_Angle_AB_AC(const v3_f& A, const v3_f& B, const v3_f& C) {
 vector<v3_f> Curve_Smooth(const vector<v3_f>& curve, float angle_threshold = 170) {
 
     vector<v3_f> smooth_curve;
-    smooth_curve.reserve(curve.size()*2);
+    smooth_curve.reserve(curve.size() * 2);
     smooth_curve.push_back(curve[0]);
 
-    for (int i = 1; i < curve.size() - 1;i++) {
-        
+    for (int i = 1; i < curve.size() - 1; i++) {
+
         float angle = Get_Angle_AB_AC(curve[i], curve[i - 1], curve[i + 1]);
 
-        if (angle<angle_threshold) {
+        if (angle < angle_threshold) {
             v3_f pos_1 = (curve[i - 1] - curve[i]) * 0.25 + curve[i];
             v3_f pos_2 = (curve[i + 1] - curve[i]) * 0.25 + curve[i];
 
@@ -435,14 +435,14 @@ vector<v3_f> Curve_Smooth(const vector<v3_f>& curve, float angle_threshold = 170
         }
     }
 
-    smooth_curve.push_back(curve[curve.size()-1]);
+    smooth_curve.push_back(curve[curve.size() - 1]);
 
     return smooth_curve;
 
 }
 
-void Find_Next_Sample(int curr_seg_id,float curr_local_distance,const vector<v3_f>& curve_point_list,float next_distance,
-    int& next_seg_id, v3_f& norm, v3_f& pos,float& last_seg_occupy,bool& valid) {
+void Find_Next_Sample(int curr_seg_id, float curr_local_distance, const vector<v3_f>& curve_point_list, float next_distance,
+    int& next_seg_id, v3_f& norm, v3_f& pos, float& last_seg_occupy, bool& valid) {
 
     float distance_remain = (curve_point_list[curr_seg_id + 1] - curve_point_list[curr_seg_id]).length() - curr_local_distance;
 
@@ -451,10 +451,10 @@ void Find_Next_Sample(int curr_seg_id,float curr_local_distance,const vector<v3_
     float distance_occupy = distance_remain;
 
     while (true) {
-        if (distance_occupy<distance_remain) {
-            seg_id_add ++;
+        if (distance_occupy < distance_remain) {
+            seg_id_add++;
 
-            if (seg_id_add+1+ seg_id_add>= curve_point_list.size()) {
+            if (seg_id_add + 1 + seg_id_add >= curve_point_list.size()) {
 
                 valid = false;
                 return;
@@ -478,7 +478,7 @@ void Find_Next_Sample(int curr_seg_id,float curr_local_distance,const vector<v3_
 
 }
 
-void Curve_Resample(const vector<v3_f>& point_list,float seg_distance, vector<v3_f>& sample_points, vector<v3_f>& sample_directions) {
+void Curve_Resample(const vector<v3_f>& point_list, float seg_distance, vector<v3_f>& sample_points, vector<v3_f>& sample_directions) {
 
     sample_points.clear();
     sample_directions.clear();
@@ -495,12 +495,12 @@ void Curve_Resample(const vector<v3_f>& point_list,float seg_distance, vector<v3
         v3_f norm;
         v3_f pos;
         float last_seg_occupy;
-        bool valid=false;
+        bool valid = false;
 
         Find_Next_Sample(curr_seg_id, curr_local_distance, point_list, seg_distance,
-            next_seg_id,norm,pos,last_seg_occupy,valid);
+            next_seg_id, norm, pos, last_seg_occupy, valid);
 
-        if (valid == false) { break;}
+        if (valid == false) { break; }
 
         sample_points.push_back(pos);
         sample_directions.push_back(norm);
